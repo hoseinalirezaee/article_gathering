@@ -34,8 +34,14 @@ class JSDPSpider(Spider):
 
             yield Request(info_url, cb_kwargs={'download_url': download_url}, callback=self.parse_info)
 
-    def parse_info(self, response: Response, download_url):
+    def parse_info(self, response, download_url):
         response.selector.remove_namespaces()
+
+        volume = response.xpath('//volume/text()').get()
+        volume = int(volume) if volume else None
+
+        number = response.xpath('//number/text()').get()
+        number = int(number) if number else None
 
         title_fa = response.xpath('//article/title_fa/text()').get()
         if title_fa:
@@ -72,6 +78,8 @@ class JSDPSpider(Spider):
         file_name = os.path.basename(download_url)
 
         yield {
+            'volume': volume,
+            'number': number,
             'file_name': file_name,
             'title_fa': title_fa,
             'title_en': title_en,
