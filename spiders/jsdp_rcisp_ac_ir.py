@@ -19,7 +19,7 @@ class JSDPSpider(Spider):
         }
     }
 
-    name = 'http://jsdp.rcisp.ac.ir'
+    name = 'jsdp_rcisp_ac_ir'
 
     start_urls = ['http://jsdp.rcisp.ac.ir/mag-articles.php']
 
