@@ -3,9 +3,11 @@ import os
 
 import click
 from scrapy import crawler
+from scrapy import signals as scrapy_signals
 
 import signals
-from spiders.download_jsdp_rcisp_ac_ir import DownloadSpider
+from spiders.download import DownloadSpider
+from spiders.journals_ut_ac_ir import UTACSpider
 from spiders.jsdp_rcisp_ac_ir import JSDPSpider
 from utils import get_settings
 
@@ -13,6 +15,13 @@ from utils import get_settings
 @click.group('article')
 def article():
     pass
+
+
+def item_scraped(item, spider, **kwargs):
+    try:
+        print('finished: %s (%s)' % (item['file_name'], spider.name))
+    except KeyError:
+        pass
 
 
 @article.command('update', help='Updates articles list.')
@@ -24,7 +33,15 @@ def update():
     save_path = os.path.join(save_dir, 'info.json')
     settings = get_settings()
     cp = crawler.CrawlerProcess(settings)
-    cp.crawl(JSDPSpider, save_path=save_path)
+
+    c = crawler.Crawler(UTACSpider, settings)
+    c.signals.connect(item_scraped, scrapy_signals.item_scraped)
+    cp.crawl(c, save_path=save_path)
+
+    c = crawler.Crawler(JSDPSpider, settings)
+    c.signals.connect(item_scraped, scrapy_signals.item_scraped)
+    cp.crawl(c, save_path=save_path)
+
     cp.start()
     print('Updating finished.')
 
