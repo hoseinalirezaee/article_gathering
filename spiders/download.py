@@ -5,7 +5,7 @@ from scrapy import Spider
 
 
 class DownloadSpider(Spider):
-    name = 'download_jsdp_rcisp_ac_ir'
+    name = 'download'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
