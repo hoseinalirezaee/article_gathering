@@ -2,6 +2,7 @@ import os
 import re
 
 from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
 from scrapy import Spider, Request
 
 from utils import HTMLParser
@@ -32,76 +33,81 @@ class UTACSpider(Spider):
             yield Request(link.replace('http', 'https'), callback=self.parse_page)
 
     def parse_page(self, response, **kwargs):
-        o = {}
-
-        t = response.xpath('(//span[@id="ar_row_ind"]/following-sibling::a)[1]/text()').get()
-        t = re.findall(number_pattern, t)
         try:
-            volume = int(t[0])
-            number = int(t[1])
-        except (IndexError, ValueError):
-            volume = None
-            number = None
+            o = {}
 
-        download_url = response.xpath('//a[@class="pdf"]/@href').get()
-        download_url = response.urljoin(download_url)
-
-        if download_url:
-            file_name = os.path.basename(download_url)
-        else:
-            file_name = None
-
-        title = response.xpath('//h1[@class="citation_title"]/text()').get()
-        if title:
-            self.parser.reset()
-            self.parser.feed(title)
-            title = self.parser.get_text()
-            d_l = detect(title)
-            if d_l == 'fa':
-                t = {'title_fa': title}
-            elif d_l == 'en':
-                t = {'title_en': title}
+            title = response.xpath('//h1[@class="citation_title"]/text()').get()
+            if title:
+                self.parser.reset()
+                self.parser.feed(title)
+                title = self.parser.get_text()
+                d_l = detect(title)
+                if d_l == 'fa':
+                    t = {'title_fa': title}
+                else:
+                    return None
+                t['title_en'] = None
+                o.update(t)
             else:
-                t = {}
+                return None
+
+            t = response.xpath('(//span[@id="ar_row_ind"]/following-sibling::a)[1]/text()').get()
+            if t is not None:
+                t = re.findall(number_pattern, t)
+            try:
+                volume = int(t[0])
+                number = int(t[1])
+            except (IndexError, ValueError, TypeError):
+                volume = None
+                number = None
+
+            download_url = response.xpath('//a[@class="pdf"]/@href').get()
+            download_url = response.urljoin(download_url)
+
+            if download_url:
+                file_name = os.path.basename(download_url)
+            else:
+                file_name = None
+
+            summary = response.xpath('//td[@id="abs_fa"]').get()
+            if summary:
+                self.parser.reset()
+                self.parser.feed(summary)
+                summary = self.parser.get_text()
+            t = {
+                'summary_fa': None,
+                'summary_en': None
+            }
+            if summary:
+                d_l = detect(summary)
+                if d_l == 'fa':
+                    t.update({'summary_fa': summary})
+                elif d_l == 'en':
+                    t.update({'summary_en': summary})
             o.update(t)
 
-        summary = response.xpath('//td[@id="abs_fa"]').get()
-        self.parser.reset()
-        self.parser.feed(summary)
-        summary = self.parser.get_text()
-        if summary:
-            d_l = detect(summary)
-            if d_l == 'fa':
-                t = {'summary_fa': summary}
-            elif d_l == 'en':
-                t = {'summary_en': summary}
-            else:
-                t = {}
-            o.update(t)
+            o.update({
+                'volume': volume,
+                'number': number,
+                'file_name': file_name,
+                'download_url': download_url
+            })
 
-        o.update({
-            'volume': volume,
-            'number': number,
-            'file_name': file_name,
-            'download_url': download_url
-        })
+            keywords = response.xpath('//a[starts-with(@href, "./?_action=article&kw=")]/text()').getall()
 
-        keywords = response.xpath('//a[starts-with(@href, "./?_action=article&kw=")]/text()').getall()
+            keywords_fa = []
+            keywords_en = []
 
-        keywords_fa = []
-        keywords_en = []
+            for kw in keywords:
+                d_l = detect(kw)
+                if d_l == 'fa':
+                    keywords_fa.append(kw)
+                elif d_l == 'en':
+                    keywords_en.append(kw)
 
-        for kw in keywords:
-            d_l = detect(kw)
-            if d_l == 'fa':
-                keywords_fa.append(kw)
-            elif d_l == 'en':
-                keywords_en.append(kw)
+            o['keywords_fa'] = keywords_fa if keywords_fa else None
+            o['keywords_en'] = keywords_en if keywords_en else None
 
-        if keywords_fa:
-            o['keywords_fa'] = keywords_fa
-
-        if keywords_en:
-            o['keywords_en'] = keywords_en
-
-        yield o
+            yield o
+        except LangDetectException:
+            pass
