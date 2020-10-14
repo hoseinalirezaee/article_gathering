@@ -9,8 +9,14 @@ import signals
 from spiders.download import DownloadSpider
 from spiders.journals_ut_ac_ir import UTACSpider
 from spiders.jsdp_rcisp_ac_ir import JSDPSpider
+from spiders.scj_sbu_ac_ir import SBUSpider
 from utils import get_settings
 
+spider_classes = [
+    UTACSpider,
+    JSDPSpider,
+    SBUSpider
+]
 
 @click.group('article')
 def article():
@@ -34,13 +40,10 @@ def update():
     settings = get_settings()
     cp = crawler.CrawlerProcess(settings)
 
-    c = crawler.Crawler(UTACSpider, settings)
-    c.signals.connect(item_scraped, scrapy_signals.item_scraped)
-    cp.crawl(c, save_path=save_path)
-
-    c = crawler.Crawler(JSDPSpider, settings)
-    c.signals.connect(item_scraped, scrapy_signals.item_scraped)
-    cp.crawl(c, save_path=save_path)
+    for spider_cls in spider_classes:
+        c = crawler.Crawler(spider_cls, settings)
+        c.signals.connect(item_scraped, scrapy_signals.item_scraped)
+        cp.crawl(c, save_path=save_path)
 
     cp.start()
     print('Updating finished.')
@@ -66,7 +69,7 @@ def download():
         for line in file:
             article_info = json.loads(line)
             file_name = article_info['file_name']
-            if os.path.isfile(os.path.join(save_dir, file_name)):
+            if file_name is None or os.path.isfile(os.path.join(save_dir, file_name)):
                 continue
             download_urls.append(article_info['download_url'])
     print('Total files: %d' % len(download_urls))
