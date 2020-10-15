@@ -1,5 +1,4 @@
 import re
-from os.path import join
 from urllib.parse import urljoin
 
 from langdetect import detect
@@ -12,15 +11,9 @@ pattern = re.compile(r'\d+')
 
 
 class SBUSpider(Spider):
-    name = 'sbu.ac.ir'
+    name = 'sbu_ac_ir'
 
     start_urls = ['http://scj.sbu.ac.ir/index.php/index/index/journalsLoadedByAjax?category=all']
-
-    custom_settings = {
-        'ITEM_PIPELINES': {
-            'pipelines.SavePipeline': 1
-        }
-    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,7 +33,7 @@ class SBUSpider(Spider):
 
         issues = response.xpath('//a/@href').re(r'.*/view/\d+')
         for issue in issues:
-            yield Request(join(issue, 'showToc'), callback=self.parse_issue)
+            yield Request(urljoin(issue + '/', 'showToc'), callback=self.parse_issue)
 
     def parse_issue(self, response, **kwargs):
         temp = response.css('.MDbreadcrumb').xpath('li[last()]//a/text()').get()
@@ -114,7 +107,7 @@ class SBUSpider(Spider):
             yield {
                 'volume': volume,
                 'number': number,
-                'file_name': file_name,
+                'file_name': '%s_%s' % (self.name, file_name) if file_name else None,
                 'title_fa': title.strip() if title else None,
                 'title_en': None,
                 'summary_fa': summary_fa.strip() if summary_fa else None,

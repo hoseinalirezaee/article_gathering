@@ -13,12 +13,6 @@ class JSDPSpider(Spider):
         super().__init__(*args, **kwargs)
         self.parser = HTMLParser()
 
-    custom_settings = {
-        'ITEM_PIPELINES': {
-            'pipelines.SavePipeline': 1
-        }
-    }
-
     name = 'jsdp_rcisp_ac_ir'
 
     start_urls = ['http://jsdp.rcisp.ac.ir/mag-articles.php']
@@ -80,7 +74,7 @@ class JSDPSpider(Spider):
         yield {
             'volume': volume,
             'number': number,
-            'file_name': file_name,
+            'file_name': '%s_%s' % (self.name, file_name) if file_name else None,
             'title_fa': title_fa,
             'title_en': title_en,
             'summary_fa': summary_fa,

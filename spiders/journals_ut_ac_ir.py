@@ -13,12 +13,6 @@ number_pattern = re.compile(r'\d+')
 class UTACSpider(Spider):
     name = 'journals_ut_ac_ir'
 
-    custom_settings = {
-        'ITEM_PIPELINES': {
-            'pipelines.SavePipeline': 1
-        }
-    }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parser = HTMLParser()
@@ -89,7 +83,7 @@ class UTACSpider(Spider):
             o.update({
                 'volume': volume,
                 'number': number,
-                'file_name': file_name,
+                'file_name': '%s_%s' % (self.name, file_name) if file_name else None,
                 'download_url': download_url
             })
 
