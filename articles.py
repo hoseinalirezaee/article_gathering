@@ -41,6 +41,9 @@ def update():
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
     save_path = os.path.join(save_dir, 'info.jsonlines')
+    if os.path.isfile(save_path):
+        os.remove(save_path)
+
     settings = get_settings()
     settings.set('FEEDS',
                  {save_path: {'format': 'jsonlines', 'overwrite': True, 'item_export_kwargs': {'sort_keys': True}}})
