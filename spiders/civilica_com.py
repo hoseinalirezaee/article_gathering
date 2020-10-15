@@ -33,12 +33,6 @@ class CivilicaSpider(Spider):
             yield Request(collection, callback=self.parse_collection)
             raise DontCloseSpider()
 
-    custom_settings = {
-        'ITEM_PIPELINES': {
-            'pipelines.SavePipeline': 1
-        }
-    }
-
     def parse(self, response, **kwargs):
         response.selector.remove_namespaces()
         doc_collections: list = response.xpath('//loc/text()').re(r'.*docs/\d+/')
