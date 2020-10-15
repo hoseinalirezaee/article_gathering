@@ -20,12 +20,12 @@ class DownloadSpider(Spider):
 
     def start_requests(self):
         download_list = getattr(self, 'download_list', [])
-        for url in download_list:
-            yield Request(url)
+        for item in download_list:
+            yield Request(item['url'], cb_kwargs={'file_name': item['file_name']})
 
     def parse(self, response, **kwargs):
         url = response.url
-        file_name = os.path.basename(url)
+        file_name = kwargs.get('file_name') or os.path.basename(url)
         self.downloaded_count += 1
         yield {
             'file_name': file_name,
