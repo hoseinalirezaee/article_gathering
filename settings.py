@@ -10,7 +10,7 @@ ROBOTSTXT_OBEY = True
 FEED_EXPORT_ENCODING = 'utf-8'
 
 DOWNLOAD_DELAY = 0
-CONCURRENT_REQUESTS = 16
+CONCURRENT_REQUESTS = 100
 CONCURRENT_REQUESTS_PER_DOMAIN = 8
 
 RETRY_ENABLED = True
@@ -42,7 +42,7 @@ EXTENSIONS = {
     'scrapy.extensions.memusage.MemoryUsage': None,
     'scrapy.extensions.memdebug.MemoryDebugger': None,
     'scrapy.extensions.closespider.CloseSpider': None,
-    'scrapy.extensions.feedexport.FeedExporter': None,
+    'scrapy.extensions.feedexport.FeedExporter': 1,
     'scrapy.extensions.logstats.LogStats': None,
     'scrapy.extensions.spiderstate.SpiderState': None,
     'scrapy.extensions.throttle.AutoThrottle': None,
