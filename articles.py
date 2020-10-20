@@ -46,7 +46,8 @@ def update():
 
     settings = get_settings()
     settings.set('FEEDS',
-                 {save_path: {'format': 'jsonlines', 'overwrite': True, 'item_export_kwargs': {'sort_keys': True}}})
+                 {'file:///' + save_path: {'format': 'jsonlines', 'overwrite': True,
+                                           'item_export_kwargs': {'sort_keys': True}}})
     cp = crawler.CrawlerProcess(settings)
 
     for spider_cls in spider_classes:
